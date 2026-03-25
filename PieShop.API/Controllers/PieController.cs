@@ -1,5 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using PieShop.API.Entities;
 using PieShop.API.Models;
+using PieShop.API.Services;
+using System.Threading.Tasks;
 
 namespace PieShop.API.Controllers
 {
@@ -7,43 +11,31 @@ namespace PieShop.API.Controllers
     [ApiController]
     public class PieController : ControllerBase
     {
-        PieDataStore pieDataStore;
-        ILogger<PieController> logger;
+        private readonly IPieShopRepository pieShopRepository;
+        private readonly IMapper mapper;
 
-        public PieController(PieDataStore pieDataStore, ILogger<PieController> logger)
+        public PieController(IPieShopRepository pieShopRepository, IMapper mapper)
         {
-            this.pieDataStore = pieDataStore ??
-                throw new ArgumentNullException(nameof(pieDataStore));
-            this.logger = logger ??
-                throw new ArgumentNullException(nameof(logger));
+            this.pieShopRepository = pieShopRepository ?? throw new ArgumentNullException(nameof(pieShopRepository));
+            this.mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<PieDto>> GetPies()
+        public async Task<ActionResult<IEnumerable<PieDto>>> GetPies()
         {
-            return Ok(pieDataStore.PieData);
+            var pieEntities = await pieShopRepository.GetPiesAsync();
+
+            return Ok(mapper.Map<IEnumerable<PieDto>>(pieEntities));
         }
 
         [HttpGet("{pieId}")]
-        public ActionResult<PieDto> GetPie(int pieId)
+        public async Task<ActionResult<PieDto>> GetPie(int pieId)
         {
-            try
-            {
-                var pie = pieDataStore.PieData.First(pie => pie.Id == pieId);
+            var pieEntity = await pieShopRepository.GetPieAsync(pieId);
 
-                if(pie == null)
-                {
-                    return NotFound();
-                }
+            if (pieEntity == null) return NotFound();
 
-                return Ok(pie);
-            }
-            catch (Exception ex) 
-            {
-                logger.LogCritical($"Exception while getting a pie with the ID {pieId}", ex);
-
-                return StatusCode(500, "A problem happened while handling your request");
-            }
+            return Ok(mapper.Map<PieDto>(pieEntity));
         }
 
     }
