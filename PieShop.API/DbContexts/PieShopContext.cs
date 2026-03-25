@@ -16,7 +16,7 @@ public class PieShopContext : DbContext
             base.OnConfiguring(optionsBuilder);
         }
 
-        protected void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Pie>().HasData(
                 new Pie()
@@ -40,6 +40,8 @@ public class PieShopContext : DbContext
                     Description = "A decadent, creamy cheesecake",
                     Price = 14.95
                 });
+
+            base.OnModelCreating(modelBuilder);
         }
     }
 }

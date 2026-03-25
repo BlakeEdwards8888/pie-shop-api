@@ -28,7 +28,7 @@ namespace PieShop.API.Controllers
             return Ok(mapper.Map<IEnumerable<PieDto>>(pieEntities));
         }
 
-        [HttpGet("{pieId}")]
+        [HttpGet("{pieId}", Name = "GetPie")]
         public async Task<ActionResult<PieDto>> GetPie(int pieId)
         {
             var pieEntity = await pieShopRepository.GetPieAsync(pieId);
@@ -36,6 +36,23 @@ namespace PieShop.API.Controllers
             if (pieEntity == null) return NotFound();
 
             return Ok(mapper.Map<PieDto>(pieEntity));
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<PieDto>> CreatePie([FromBody] PieCreationDto pieToCreate)
+        {
+            var pieEntity = mapper.Map<Pie>(pieToCreate);
+
+            await pieShopRepository.AddPieAsync(pieEntity);
+            await pieShopRepository.SaveChangesAsync();
+
+            var pieDto = mapper.Map<PieDto>(pieEntity);
+
+            return CreatedAtRoute("GetPie",
+                new
+                {
+                    pieId = pieDto.Id,
+                }, pieDto);
         }
 
     }

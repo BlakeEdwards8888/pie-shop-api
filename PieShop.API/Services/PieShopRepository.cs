@@ -22,5 +22,15 @@ namespace PieShop.API.Services
         {
             return await context.Pies.Where(p => p.Id == pieId).FirstOrDefaultAsync();
         }
+
+        public async Task AddPieAsync(Pie pie)
+        {
+            context.Pies.Add(pie);
+        }
+
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await context.SaveChangesAsync() >= 0;
+        }
     }
 }

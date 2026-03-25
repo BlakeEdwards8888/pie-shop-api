@@ -5,6 +5,7 @@ using PieShop.API;
 using PieShop.API.DbContexts;
 using PieShop.API.Entities;
 using PieShop.API.Models;
+using PieShop.API.Profiles;
 using PieShop.API.Services;
 using Serilog;
 
@@ -43,13 +44,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<PieShopContext>(dbContextOptions
-    => dbContextOptions.UseSqlite(builder.Configuration["ConnectionStrings:PieShopDBConnectionString"]));
+    => {
+        dbContextOptions.UseSqlite(builder.Configuration["ConnectionStrings:PieShopDBConnectionString"]);
+        dbContextOptions.UseSeeding();
+    });
 
 builder.Services.AddScoped<IPieShopRepository, PieShopRepository>();
 
-builder.Services.AddAutoMapper(configAction => {
-    configAction.CreateMap<PieDto, Pie>();
-});
+builder.Services.AddAutoMapper(configAction => configAction.AddProfile<PieProfile>());
 
 var app = builder.Build();
 

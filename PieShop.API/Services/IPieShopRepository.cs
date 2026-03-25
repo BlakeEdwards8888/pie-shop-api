@@ -6,5 +6,7 @@ namespace PieShop.API.Services
     {
         Task<IEnumerable<Pie>> GetPiesAsync();
         Task<Pie?> GetPieAsync(int pieId);
+        Task AddPieAsync(Pie pie);
+        Task<bool> SaveChangesAsync();
     }
 }
