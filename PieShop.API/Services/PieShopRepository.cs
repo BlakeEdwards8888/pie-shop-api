@@ -15,7 +15,7 @@ namespace PieShop.API.Services
 
         public async Task<IEnumerable<Pie>> GetPiesAsync()
         {
-            return await context.Pies.OrderBy(p => p.Name).ToListAsync();
+            return await context.Pies.OrderBy(p => p.Id).ToListAsync();
         }
 
         public async Task<Pie?> GetPieAsync(int pieId)
@@ -31,6 +31,11 @@ namespace PieShop.API.Services
         public async Task<bool> SaveChangesAsync()
         {
             return await context.SaveChangesAsync() >= 0;
+        }
+
+        public void DeletePie(Pie pie)
+        {
+            context.Pies.Remove(pie);
         }
     }
 }

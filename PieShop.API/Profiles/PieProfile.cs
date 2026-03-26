@@ -10,6 +10,7 @@ namespace PieShop.API.Profiles
         {
             CreateMap<Pie, PieDto>();
             CreateMap<PieCreationDto, Pie>();
+            CreateMap<PieUpdateDto, Pie>();
         }
     }
 }

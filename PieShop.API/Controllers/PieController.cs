@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using PieShop.API.Entities;
 using PieShop.API.Models;
@@ -39,7 +40,7 @@ namespace PieShop.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<PieDto>> CreatePie([FromBody] PieCreationDto pieToCreate)
+        public async Task<ActionResult<PieDto>> CreatePie(PieCreationDto pieToCreate)
         {
             var pieEntity = mapper.Map<Pie>(pieToCreate);
 
@@ -55,5 +56,41 @@ namespace PieShop.API.Controllers
                 }, pieDto);
         }
 
+        [HttpDelete("{pieId}")]
+        public async Task<ActionResult> DeletePie(int pieId)
+        {
+            var pieToDelete = await pieShopRepository.GetPieAsync(pieId);
+
+            if(pieToDelete == null) return NotFound();
+
+            pieShopRepository.DeletePie(pieToDelete);
+            await pieShopRepository.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("{pieId}")]
+        public async Task<ActionResult> UpdatePie(int pieId, PieUpdateDto updatedPie)
+        {
+            var pieEntity = await pieShopRepository.GetPieAsync(pieId);
+
+            if(pieEntity == null) return NotFound();
+
+            mapper.Map(updatedPie, pieEntity);
+
+            await pieShopRepository.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPatch("{pieId}")]
+        public async Task<ActionResult> PatchPie(int pieId, JsonPatchDocument<PieUpdateDto> patchDocument)
+        {
+            var pieEntity = pieShopRepository.GetPieAsync(pieId);
+
+            if(pieEntity == null) return NotFound();
+
+            return Ok();
+        }
     }
 }

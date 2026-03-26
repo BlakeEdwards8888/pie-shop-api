@@ -8,5 +8,6 @@ namespace PieShop.API.Services
         Task<Pie?> GetPieAsync(int pieId);
         Task AddPieAsync(Pie pie);
         Task<bool> SaveChangesAsync();
+        void DeletePie(Pie pie);
     }
 }

@@ -46,7 +46,6 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<PieShopContext>(dbContextOptions
     => {
         dbContextOptions.UseSqlite(builder.Configuration["ConnectionStrings:PieShopDBConnectionString"]);
-        dbContextOptions.UseSeeding();
     });
 
 builder.Services.AddScoped<IPieShopRepository, PieShopRepository>();
