@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using PieShop.API.Entities;
 using PieShop.API.Models;
 using PieShop.API.Services;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace PieShop.API.Controllers
 {
@@ -12,6 +12,8 @@ namespace PieShop.API.Controllers
     [ApiController]
     public class PieController : ControllerBase
     {
+        const int MAX_PAGE_SIZE = 20;
+
         private readonly IPieShopRepository pieShopRepository;
         private readonly IMapper mapper;
 
@@ -22,9 +24,15 @@ namespace PieShop.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PieDto>>> GetPies()
+        public async Task<ActionResult<IEnumerable<PieDto>>> GetPies(string? category,
+            string? searchQuery, int pageNumber = 1, int pageSize = 3)
         {
-            var pieEntities = await pieShopRepository.GetPiesAsync();
+            pageSize = Math.Min(pageSize, MAX_PAGE_SIZE);
+
+            var (pieEntities, paginationMetadata) = await pieShopRepository.GetPiesAsync(category, searchQuery,
+                pageNumber, pageSize);
+
+            Response.Headers.Append("X_Pagination", JsonSerializer.Serialize(paginationMetadata));
 
             return Ok(mapper.Map<IEnumerable<PieDto>>(pieEntities));
         }
@@ -84,13 +92,29 @@ namespace PieShop.API.Controllers
         }
 
         [HttpPatch("{pieId}")]
-        public async Task<ActionResult> PatchPie(int pieId, JsonPatchDocument<PieUpdateDto> patchDocument)
+        public async Task<ActionResult> PatchPie(int pieId, [FromBody] JsonPatchDocument<PieUpdateDto> patchDocument)
         {
-            var pieEntity = pieShopRepository.GetPieAsync(pieId);
+            var pieEntity = await pieShopRepository.GetPieAsync(pieId);
 
             if(pieEntity == null) return NotFound();
 
-            return Ok();
+            var pieToPatch = mapper.Map<PieUpdateDto>(pieEntity);
+
+            patchDocument.ApplyTo(pieToPatch, jsonPatchError =>
+            {
+                var key = jsonPatchError.AffectedObject.GetType().Name;
+                ModelState.AddModelError(key, jsonPatchError.ErrorMessage);
+            });
+
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            if(!TryValidateModel(pieToPatch)) return BadRequest(ModelState);
+
+            mapper.Map(pieToPatch, pieEntity);
+
+            await pieShopRepository.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }

@@ -4,7 +4,7 @@ namespace PieShop.API.Services
 {
     public interface IPieShopRepository
     {
-        Task<IEnumerable<Pie>> GetPiesAsync();
+        Task<(IEnumerable<Pie>, PaginationMetadata)> GetPiesAsync(string? category, string? searchQuery, int pageNumber, int pageSize);
         Task<Pie?> GetPieAsync(int pieId);
         Task AddPieAsync(Pie pie);
         Task<bool> SaveChangesAsync();

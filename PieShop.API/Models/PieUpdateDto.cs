@@ -13,5 +13,8 @@ namespace PieShop.API.Models
 
         [MaxLength(200)]
         public string? Description { get; set; }
+
+        [MaxLength(50)]
+        public string? Category { get; set; }
     }
 }

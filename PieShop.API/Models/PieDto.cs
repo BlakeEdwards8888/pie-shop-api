@@ -1,4 +1,6 @@
-﻿namespace PieShop.API.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace PieShop.API.Models
 {
     public class PieDto
     {
@@ -6,5 +8,6 @@
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public double Price { get; set; }
+        public string Category { get; set; } = string.Empty;
     }
 }
