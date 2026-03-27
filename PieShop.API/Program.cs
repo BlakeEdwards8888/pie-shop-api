@@ -1,6 +1,8 @@
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens.Experimental;
 using PieShop.API;
 using PieShop.API.DbContexts;
 using PieShop.API.Entities;
@@ -52,6 +54,22 @@ builder.Services.AddScoped<IPieShopRepository, PieShopRepository>();
 
 builder.Services.AddAutoMapper(configAction => configAction.AddProfile<PieProfile>());
 
+builder.Services.AddAuthentication("Bearer").AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new()
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Authentication:Issuer"],
+        ValidAudience = builder.Configuration["Authentication:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Convert.FromBase64String(builder.Configuration["Authentication:SecretForKey"]))
+    };
+});
+
+builder.Services.AddAuthorizationBuilder().AddPolicy("Admin", policy => policy.RequireClaim("customrole", "admin"));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -62,6 +80,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

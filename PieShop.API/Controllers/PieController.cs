@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using PieShop.API.Entities;
@@ -10,6 +11,7 @@ namespace PieShop.API.Controllers
 {
     [Route("api/pies")]
     [ApiController]
+    [Authorize]
     public class PieController : ControllerBase
     {
         const int MAX_PAGE_SIZE = 20;
@@ -47,6 +49,7 @@ namespace PieShop.API.Controllers
             return Ok(mapper.Map<PieDto>(pieEntity));
         }
 
+        [Authorize(Policy = "Admin")]
         [HttpPost]
         public async Task<ActionResult<PieDto>> CreatePie(PieCreationDto pieToCreate)
         {
@@ -64,6 +67,7 @@ namespace PieShop.API.Controllers
                 }, pieDto);
         }
 
+        [Authorize(Policy = "Admin")]
         [HttpDelete("{pieId}")]
         public async Task<ActionResult> DeletePie(int pieId)
         {
@@ -77,6 +81,7 @@ namespace PieShop.API.Controllers
             return NoContent();
         }
 
+        [Authorize(Policy = "Admin")]
         [HttpPut("{pieId}")]
         public async Task<ActionResult> UpdatePie(int pieId, PieUpdateDto updatedPie)
         {
@@ -91,6 +96,7 @@ namespace PieShop.API.Controllers
             return NoContent();
         }
 
+        [Authorize(Policy = "Admin")]
         [HttpPatch("{pieId}")]
         public async Task<ActionResult> PatchPie(int pieId, [FromBody] JsonPatchDocument<PieUpdateDto> patchDocument)
         {
