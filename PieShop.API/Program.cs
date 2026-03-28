@@ -1,7 +1,12 @@
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens.Experimental;
+using PieShop.API;
 using PieShop.API.DbContexts;
+using PieShop.API.Entities;
+using PieShop.API.Models;
 using PieShop.API.Profiles;
 using PieShop.API.Services;
 using Serilog;
@@ -38,6 +43,7 @@ else
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<PieShopContext>(dbContextOptions
     => {
