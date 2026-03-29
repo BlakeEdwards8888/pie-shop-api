@@ -1,12 +1,8 @@
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.IdentityModel.Tokens.Experimental;
-using PieShop.API;
+using Microsoft.OpenApi;
 using PieShop.API.DbContexts;
-using PieShop.API.Entities;
-using PieShop.API.Models;
 using PieShop.API.Profiles;
 using PieShop.API.Services;
 using Serilog;
@@ -43,7 +39,6 @@ else
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<PieShopContext>(dbContextOptions
     => {
@@ -69,6 +64,24 @@ builder.Services.AddAuthentication("Bearer").AddJwtBearer(options =>
 });
 
 builder.Services.AddAuthorizationBuilder().AddPolicy("Admin", policy => policy.RequireClaim("customrole", "admin"));
+
+builder.Services.AddSwaggerGen(setupAction =>
+{
+    setupAction.AddSecurityDefinition("JWTBearerAuth",
+        new OpenApiSecurityScheme()
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            Description = "JWT Authorization header using the Bearer scheme",
+            In = ParameterLocation.Header,
+            Name = "Bearer"
+        });
+
+    setupAction.AddSecurityRequirement(document => new OpenApiSecurityRequirement()
+    {
+        [new OpenApiSecuritySchemeReference("JWTBearerAuth", document)] = []
+    });
+});
 
 var app = builder.Build();
 
