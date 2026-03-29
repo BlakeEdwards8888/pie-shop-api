@@ -57,9 +57,15 @@ namespace PieShop.API.Controllers
 
             var jwtSecurityToken = new JwtSecurityToken(
                 configuration["Authentication:Issuer"],
-                configuration["Authentication:Audience"]);
+                configuration["Authentication:Audience"],
+                claimsForToken,
+                DateTime.UtcNow,
+                DateTime.UtcNow.AddHours(1),
+                signingCredentials);
 
-            return Ok();
+            var tokenToReturn = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+
+            return Ok(tokenToReturn);
         }
 
         private PieShopUser ValidateCredentials(string? userName, string? password)
