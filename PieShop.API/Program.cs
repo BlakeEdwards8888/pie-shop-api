@@ -1,4 +1,8 @@
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -6,6 +10,7 @@ using PieShop.API.DbContexts;
 using PieShop.API.Profiles;
 using PieShop.API.Services;
 using Serilog;
+using System.Reflection;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
@@ -36,7 +41,11 @@ else
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.ReturnHttpNotAcceptable = true;
+}).AddXmlDataContractSerializerFormatters();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
@@ -65,22 +74,51 @@ builder.Services.AddAuthentication("Bearer").AddJwtBearer(options =>
 
 builder.Services.AddAuthorizationBuilder().AddPolicy("Admin", policy => policy.RequireClaim("customrole", "admin"));
 
+builder.Services.AddApiVersioning(setupAction =>
+{
+    setupAction.ReportApiVersions = true;
+    setupAction.AssumeDefaultVersionWhenUnspecified = true;
+    setupAction.DefaultApiVersion = new ApiVersion(1, 0);
+}).AddMvc().AddApiExplorer(setupAction =>
+{
+    setupAction.SubstituteApiVersionInUrl = true;
+});
+
+var apiVersionDescriptionProvider = builder.Services.BuildServiceProvider()
+    .GetRequiredService<IApiVersionDescriptionProvider>();
+
 builder.Services.AddSwaggerGen(setupAction =>
 {
-    setupAction.AddSecurityDefinition("JWTBearerAuth",
-        new OpenApiSecurityScheme()
-        {
-            Type = SecuritySchemeType.Http,
-            Scheme = "bearer",
-            Description = "JWT Authorization header using the Bearer scheme",
-            In = ParameterLocation.Header,
-            Name = "Bearer"
-        });
-
-    setupAction.AddSecurityRequirement(document => new OpenApiSecurityRequirement()
+    foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
     {
-        [new OpenApiSecuritySchemeReference("JWTBearerAuth", document)] = []
-    });
+        setupAction.SwaggerDoc($"{description.GroupName}",
+            new OpenApiInfo()
+            {
+                Title = "Pie Shop API",
+                Description = "API for Bethany's Pie Shop",
+                Version = description.ApiVersion.ToString()
+            });
+
+        var xmlCommentsFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, xmlCommentsFile);
+
+        setupAction.IncludeXmlComments(xmlCommentsFullPath);
+
+        setupAction.AddSecurityDefinition("JWTBearerAuth",
+            new OpenApiSecurityScheme()
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                Description = "JWT Authorization header using the Bearer scheme",
+                In = ParameterLocation.Header,
+                Name = "Bearer"
+            });
+
+        setupAction.AddSecurityRequirement(document => new OpenApiSecurityRequirement()
+        {
+            [new OpenApiSecuritySchemeReference("JWTBearerAuth", document)] = []
+        });
+    }
 });
 
 var app = builder.Build();
@@ -89,7 +127,15 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(setupAction =>
+    {
+        var descriptions = app.DescribeApiVersions();
+        foreach (var description in descriptions)
+        {
+            setupAction.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+                description.GroupName.ToUpperInvariant());
+        }
+    });
 }
 
 app.UseHttpsRedirection();
