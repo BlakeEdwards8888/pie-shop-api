@@ -12,6 +12,7 @@ namespace PieShop.API.Controllers
     [Route("api/pies")]
     [ApiController]
     [Authorize]
+    [Produces("application/json")]
     public class PieController : ControllerBase
     {
         const int MAX_PAGE_SIZE = 20;
@@ -133,7 +134,8 @@ namespace PieShop.API.Controllers
         /// <returns></returns>
         [Authorize(Policy = "Admin")]
         [HttpPatch("{pieId}")]
-        public async Task<ActionResult> PatchPie(int pieId, [FromBody] JsonPatchDocument<PieUpdateDto> patchDocument)
+        [Consumes("application/json-patch+json")]
+        public async Task<ActionResult> PatchPie(int pieId, JsonPatchDocument<PieUpdateDto> patchDocument)
         {
             var pieEntity = await pieShopRepository.GetPieAsync(pieId);
 

@@ -1,8 +1,6 @@
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -32,7 +30,7 @@ else
     builder.Host.UseSerilog((context, loggerConfiguration) => loggerConfiguration
         .MinimumLevel.Debug()
         .WriteTo.Console()
-        .WriteTo.File("logs/cityinfo.txt", rollingInterval: RollingInterval.Day)
+        .WriteTo.File("logs/pieshop.txt", rollingInterval: RollingInterval.Day)
         .WriteTo.ApplicationInsights(new TelemetryConfiguration()
         {
             ConnectionString = builder.Configuration["ApplicationInsightsConnectionString"]
@@ -44,7 +42,7 @@ else
 builder.Services.AddControllers(options =>
 {
     options.ReturnHttpNotAcceptable = true;
-}).AddXmlDataContractSerializerFormatters();
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -79,6 +77,7 @@ builder.Services.AddApiVersioning(setupAction =>
     setupAction.ReportApiVersions = true;
     setupAction.AssumeDefaultVersionWhenUnspecified = true;
     setupAction.DefaultApiVersion = new ApiVersion(1, 0);
+    setupAction.ApiVersionReader = new UrlSegmentApiVersionReader();
 }).AddMvc().AddApiExplorer(setupAction =>
 {
     setupAction.SubstituteApiVersionInUrl = true;
@@ -89,54 +88,51 @@ var apiVersionDescriptionProvider = builder.Services.BuildServiceProvider()
 
 builder.Services.AddSwaggerGen(setupAction =>
 {
-    foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
-    {
-        setupAction.SwaggerDoc($"{description.GroupName}",
-            new OpenApiInfo()
-            {
-                Title = "Pie Shop API",
-                Description = "API for Bethany's Pie Shop",
-                Version = description.ApiVersion.ToString()
-            });
-
-        var xmlCommentsFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-        var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, xmlCommentsFile);
-
-        setupAction.IncludeXmlComments(xmlCommentsFullPath);
-
-        setupAction.AddSecurityDefinition("JWTBearerAuth",
-            new OpenApiSecurityScheme()
-            {
-                Type = SecuritySchemeType.Http,
-                Scheme = "bearer",
-                Description = "JWT Authorization header using the Bearer scheme",
-                In = ParameterLocation.Header,
-                Name = "Bearer"
-            });
-
-        setupAction.AddSecurityRequirement(document => new OpenApiSecurityRequirement()
+foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
+{
+    setupAction.SwaggerDoc($"{description.GroupName}",
+        new OpenApiInfo()
         {
-            [new OpenApiSecuritySchemeReference("JWTBearerAuth", document)] = []
+            Title = "Pie Shop API",
+            Description = "API for Bethany's Pie Shop",
+            Version = description.ApiVersion.ToString()
         });
+
+    var xmlCommentsFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, xmlCommentsFile);
+
+    setupAction.IncludeXmlComments(xmlCommentsFullPath);
+
+    setupAction.AddSecurityDefinition("JWTBearerAuth",
+        new OpenApiSecurityScheme()
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            Description = "JWT Authorization header using the Bearer scheme",
+            In = ParameterLocation.Header,
+            Name = "Bearer"
+        });
+
+    setupAction.AddSecurityRequirement(document => new OpenApiSecurityRequirement()
+    {
+        [new OpenApiSecuritySchemeReference("JWTBearerAuth", document)] = []
+    });
     }
 });
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(setupAction =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(setupAction =>
+    var descriptions = app.DescribeApiVersions();
+    foreach (var description in descriptions)
     {
-        var descriptions = app.DescribeApiVersions();
-        foreach (var description in descriptions)
-        {
-            setupAction.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
-                description.GroupName.ToUpperInvariant());
-        }
-    });
-}
+        setupAction.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+            description.GroupName.ToUpperInvariant());
+    }
+});
 
 app.UseHttpsRedirection();
 

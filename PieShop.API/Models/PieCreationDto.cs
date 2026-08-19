@@ -9,7 +9,7 @@ namespace PieShop.API.Models
         public string Name { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "A price value is required for the creation of a new pie")]
-        public double Price { get; set; }
+        public double? Price { get; set; }
 
         [MaxLength(200)]
         public string? Description { get; set; }

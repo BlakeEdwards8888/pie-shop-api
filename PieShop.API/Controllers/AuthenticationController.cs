@@ -40,6 +40,11 @@ namespace PieShop.API.Controllers
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
+        /// <summary>
+        /// Request authentication
+        /// </summary>
+        /// <param name="requestBody">Username and password. Use "admin"/"admin" for full permissions</param>
+        /// <returns>JWT for authentication</returns>
         [HttpPost("authenticate")]
         public ActionResult<string> Authenticate(AuthenticationRequestBody requestBody)
         {
@@ -70,7 +75,9 @@ namespace PieShop.API.Controllers
 
         private PieShopUser ValidateCredentials(string? userName, string? password)
         {
-            return new PieShopUser(1, userName ?? "", "Blake", "Edwards", "admin");
+            if(userName == "admin" && password == "admin") return new PieShopUser(1, userName ?? "", "Blake", "Edwards", "admin");
+
+            return new PieShopUser(1, userName ?? "", "Blake", "Edwards", "user");
         }
     }
 }
