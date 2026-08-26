@@ -1,5 +1,8 @@
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -27,17 +30,29 @@ if (environment == Environments.Development)
 }
 else
 {
-    builder.Host.UseSerilog((context, loggerConfiguration) => loggerConfiguration
-        .MinimumLevel.Debug()
-        .WriteTo.Console()
-        .WriteTo.File("logs/pieshop.txt", rollingInterval: RollingInterval.Day)
-        .WriteTo.ApplicationInsights(new TelemetryConfiguration()
-        {
-            ConnectionString = builder.Configuration["ApplicationInsightsConnectionString"]
-        }, TelemetryConverter.Traces));
+    //set up azure key vault
+    var secretClient = new SecretClient(
+        new Uri(builder.Configuration["SecretClientUri"]),
+        new DefaultAzureCredential());
+
+    builder.Configuration.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());
+
+
+    //set up logging to application insights
+    builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
+
+    Log.Logger = new LoggerConfiguration()
+        .ReadFrom.Configuration(builder.Configuration)
+        .Enrich.FromLogContext()
+        .WriteTo.ApplicationInsights(
+        builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"],
+        TelemetryConverter.Traces)
+        .CreateLogger();
+
+    builder.Host.UseSerilog();
 }
 
-// Add services to the container.
+//Add services to the container.
 
 builder.Services.AddControllers(options =>
 {
@@ -141,5 +156,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var serviceScope = app.Services.GetService<IServiceScopeFactory>().CreateScope())
+{
+    var context = serviceScope.ServiceProvider.GetRequiredService<PieShopContext>();
+    context.Database.EnsureDeleted();
+    context.Database.Migrate();
+}
 
 app.Run();
