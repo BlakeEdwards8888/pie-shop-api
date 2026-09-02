@@ -41,4 +41,4 @@ Any other provided credentials are limited to read-only access to GET endpoints
 
 This project helped me develop a deeper understanding of:
 - Designing RESTful APIs
-- Authentication and role-based authorization control
+- Authentication and Authorization
