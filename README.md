@@ -38,6 +38,7 @@ Any other provided credentials are limited to read-only access to GET endpoints
 - C#
 - ASP.NET Core
 - Entity Framework Core
+- Swagger
 - Git
 - Azure
 
