@@ -4,6 +4,11 @@ A RESTful API built with C# and ASP.NET Core for managing an online pie shop
 
 Demo: https://pie-shop-appsvc-h0dzgyhgbha9fbg6.canadacentral-01.azurewebsites.net/swagger/index.html
 
+## Overview
+
+Pie Shop API is a RESTful backend application for managing products in a fictional online pie shop. The project was built to strengthen my understanding of backend development with ASP.NET Core and to practice designing and implementing a production-style REST API.
+
+The API supports creating, retrieving, updating, and deleting pie data, along with searching and retrieving individual resources.
 
 ## Features
 
@@ -42,3 +47,8 @@ Any other provided credentials are limited to read-only access to GET endpoints
 This project helped me develop a deeper understanding of:
 - Designing RESTful APIs
 - Authentication and Authorization
+- Entity Framework Core
+- Repository pattern
+- Asynchronous programming
+- Dependency Injection
+- Separation of Concerns
